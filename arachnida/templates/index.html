@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARACHNIDA // WEB CRAWLER</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --green: #00ff41;
+            --green-dim: #00a827;
+            --green-glow: rgba(0, 255, 65, 0.15);
+            --bg: #020c02;
+            --bg-panel: #040f04;
+            --bg-card: #060e06;
+            --border: #0a2a0a;
+            --border-bright: #1a5c1a;
+            --red: #ff2d2d;
+            --amber: #ffb300;
+            --text-dim: #3a6b3a;
+        }
+ 
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+ 
+        body {
+            background: var(--bg);
+            color: var(--green);
+            font-family: 'Share Tech Mono', monospace;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+ 
+        /* Scanline overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 0, 0, 0.03) 2px,
+                rgba(0, 0, 0, 0.03) 4px
+            );
+            pointer-events: none;
+            z-index: 1000;
+        }
+ 
+        /* Vignette */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.7) 100%);
+            pointer-events: none;
+            z-index: 999;
+        }
+ 
+        /* ── HEADER ── */
+        header {
+            border-bottom: 1px solid var(--border-bright);
+            padding: 1.5rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-panel);
+            position: relative;
+        }
+ 
+        header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--green), transparent);
+            animation: scan-line 4s ease-in-out infinite;
+        }
+ 
+        @keyframes scan-line {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+ 
+        .logo {
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            font-size: 1.6rem;
+            letter-spacing: 0.2em;
+            text-shadow: 0 0 20px var(--green), 0 0 40px rgba(0,255,65,0.3);
+            animation: flicker 8s infinite;
+        }
+ 
+        @keyframes flicker {
+            0%, 95%, 100% { opacity: 1; }
+            96% { opacity: 0.7; }
+            97% { opacity: 1; }
+            98% { opacity: 0.5; }
+            99% { opacity: 1; }
+        }
+ 
+        .logo span { color: var(--green-dim); font-size: 0.9rem; display: block; letter-spacing: 0.4em; margin-top: 2px; }
+ 
+        .status-bar {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+ 
+        .status-item { display: flex; align-items: center; gap: 0.4rem; }
+        .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green-dim); animation: pulse 2s infinite; }
+        .dot.active { background: var(--green); box-shadow: 0 0 8px var(--green); }
+ 
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+ 
+        /* ── MAIN LAYOUT ── */
+        main {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 0;
+            height: calc(100vh - 73px);
+        }
+ 
+        /* ── LEFT PANEL ── */
+        .control-panel {
+            border-right: 1px solid var(--border-bright);
+            background: var(--bg-panel);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+ 
+        .panel-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            letter-spacing: 0.2em;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+ 
+        .panel-header::before {
+            content: '▶';
+            color: var(--green);
+            font-size: 0.6rem;
+        }
+ 
+        .panel-body { padding: 1.5rem; flex: 1; overflow-y: auto; }
+ 
+        .field-group { margin-bottom: 1.5rem; }
+ 
+        label {
+            display: block;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            letter-spacing: 0.15em;
+            margin-bottom: 0.5rem;
+        }
+ 
+        label .required { color: var(--green); }
+ 
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border-bright);
+            color: var(--green);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85rem;
+            padding: 0.6rem 0.8rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+ 
+        input[type="text"]:focus, input[type="number"]:focus {
+            border-color: var(--green);
+            box-shadow: 0 0 12px var(--green-glow), inset 0 0 8px rgba(0,255,65,0.05);
+        }
+ 
+        input[type="text"]::placeholder { color: var(--text-dim); }
+ 
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.6rem 0;
+        }
+ 
+        .toggle-label { font-size: 0.8rem; color: var(--green-dim); }
+        .toggle-desc { font-size: 0.65rem; color: var(--text-dim); margin-top: 2px; }
+ 
+        .toggle {
+            position: relative;
+            width: 40px;
+            height: 20px;
+            cursor: pointer;
+        }
+ 
+        .toggle input { display: none; }
+ 
+        .toggle-track {
+            position: absolute;
+            inset: 0;
+            background: var(--border);
+            border: 1px solid var(--border-bright);
+            transition: 0.2s;
+        }
+ 
+        .toggle input:checked ~ .toggle-track {
+            background: rgba(0,255,65,0.15);
+            border-color: var(--green);
+            box-shadow: 0 0 8px var(--green-glow);
+        }
+ 
+        .toggle-thumb {
+            position: absolute;
+            top: 3px; left: 3px;
+            width: 12px; height: 12px;
+            background: var(--text-dim);
+            transition: 0.2s;
+        }
+ 
+        .toggle input:checked ~ .toggle-track .toggle-thumb {
+            transform: translateX(20px);
+            background: var(--green);
+            box-shadow: 0 0 6px var(--green);
+        }
+ 
+        .depth-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 0.8rem;
+        }
+ 
+        .depth-row label { margin: 0; white-space: nowrap; }
+ 
+        input[type="number"] {
+            width: 70px;
+            text-align: center;
+        }
+ 
+        /* ── CRAWL BUTTON ── */
+        .crawl-btn {
+            width: 100%;
+            padding: 0.9rem;
+            background: transparent;
+            border: 1px solid var(--green);
+            color: var(--green);
+            font-family: 'Orbitron', monospace;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.2s;
+            margin-top: 1rem;
+        }
+ 
+        .crawl-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0,255,65,0.1), transparent);
+            transition: left 0.4s;
+        }
+ 
+        .crawl-btn:hover::before { left: 100%; }
+ 
+        .crawl-btn:hover {
+            background: var(--green-glow);
+            box-shadow: 0 0 20px var(--green-glow), inset 0 0 20px rgba(0,255,65,0.05);
+            text-shadow: 0 0 10px var(--green);
+        }
+ 
+        .crawl-btn:disabled {
+            border-color: var(--border-bright);
+            color: var(--text-dim);
+            cursor: not-allowed;
+        }
+ 
+        .crawl-btn:disabled::before { display: none; }
+ 
+        /* ── LOG TERMINAL ── */
+        .terminal {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            margin-top: 1.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-height: 280px;
+        }
+ 
+        .terminal-header {
+            padding: 0.4rem 0.8rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+ 
+        .terminal-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .terminal-dot.r { background: #ff5f57; }
+        .terminal-dot.y { background: #febc2e; }
+        .terminal-dot.g { background: #28c840; }
+ 
+        .terminal-log {
+            padding: 0.8rem;
+            overflow-y: auto;
+            flex: 1;
+            font-size: 0.72rem;
+            line-height: 1.6;
+        }
+ 
+        .log-line { color: var(--text-dim); }
+        .log-line.success { color: var(--green); }
+        .log-line.error { color: var(--red); }
+        .log-line.info { color: var(--amber); }
+ 
+        .cursor {
+            display: inline-block;
+            width: 8px; height: 12px;
+            background: var(--green);
+            animation: blink 1s step-end infinite;
+            vertical-align: middle;
+            margin-left: 2px;
+        }
+ 
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+ 
+        /* ── RIGHT PANEL - DASHBOARD ── */
+        .dashboard {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+ 
+        .dashboard-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-panel);
+        }
+ 
+        .dashboard-title {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            letter-spacing: 0.2em;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+ 
+        .dashboard-title::before { content: '▶'; color: var(--green); font-size: 0.6rem; }
+ 
+        .stats {
+            display: flex;
+            gap: 2rem;
+            font-size: 0.72rem;
+        }
+ 
+        .stat { color: var(--text-dim); }
+        .stat span { color: var(--green); font-size: 0.9rem; }
+ 
+        /* ── IMAGE GRID ── */
+        .image-grid {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 1rem;
+            align-content: start;
+        }
+ 
+        .image-grid::-webkit-scrollbar { width: 4px; }
+        .image-grid::-webkit-scrollbar-track { background: var(--bg); }
+        .image-grid::-webkit-scrollbar-thumb { background: var(--border-bright); }
+ 
+        /* ── EMPTY STATE ── */
+        .empty-state {
+            grid-column: 1 / -1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 2rem;
+            color: var(--text-dim);
+            text-align: center;
+            gap: 1rem;
+        }
+ 
+        .spider-ascii {
+            font-size: 0.65rem;
+            line-height: 1.4;
+            color: var(--border-bright);
+            white-space: pre;
+            animation: float 4s ease-in-out infinite;
+        }
+ 
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+ 
+        .empty-text { font-size: 0.8rem; letter-spacing: 0.1em; }
+        .empty-sub { font-size: 0.65rem; color: var(--border-bright); }
+ 
+        /* ── IMAGE CARD ── */
+        .img-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            cursor: pointer;
+            transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+            animation: card-in 0.3s ease forwards;
+            opacity: 0;
+            position: relative;
+        }
+ 
+        @keyframes card-in {
+            from { opacity: 0; transform: scale(0.92) translateY(8px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+ 
+        .img-card:hover {
+            border-color: var(--green);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0,255,65,0.1), 0 0 0 1px var(--green);
+        }
+ 
+        .img-card img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            display: block;
+            filter: brightness(0.85) contrast(1.1);
+            transition: filter 0.2s;
+        }
+ 
+        .img-card:hover img { filter: brightness(1) contrast(1.05); }
+ 
+        .img-card-footer {
+            padding: 0.5rem 0.6rem;
+            font-size: 0.62rem;
+            color: var(--text-dim);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border-top: 1px solid var(--border);
+        }
+ 
+        .img-card .scan-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: var(--green);
+            box-shadow: 0 0 8px var(--green);
+            animation: img-scan 1.5s ease forwards;
+            opacity: 0;
+        }
+ 
+        @keyframes img-scan {
+            0% { top: 0; opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+ 
+        /* ── METADATA MODAL ── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+ 
+        .modal-overlay.open { display: flex; }
+ 
+        .modal {
+            background: var(--bg-panel);
+            border: 1px solid var(--green);
+            box-shadow: 0 0 40px rgba(0,255,65,0.2);
+            width: 600px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            animation: modal-in 0.2s ease;
+        }
+ 
+        @keyframes modal-in {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+ 
+        .modal-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-bright);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+ 
+        .modal-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 0.8rem;
+            letter-spacing: 0.15em;
+        }
+ 
+        .modal-close {
+            background: none;
+            border: 1px solid var(--border-bright);
+            color: var(--text-dim);
+            font-family: 'Share Tech Mono', monospace;
+            padding: 0.2rem 0.6rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+ 
+        .modal-close:hover { border-color: var(--red); color: var(--red); }
+ 
+        .modal-img {
+            max-height: 250px;
+            object-fit: contain;
+            width: 100%;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+ 
+        .modal-meta {
+            padding: 1rem 1.5rem;
+            overflow-y: auto;
+            font-size: 0.75rem;
+            line-height: 1.8;
+            flex: 1;
+        }
+ 
+        .meta-row {
+            display: grid;
+            grid-template-columns: 160px 1fr;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--border);
+            padding: 0.3rem 0;
+        }
+ 
+        .meta-key { color: var(--text-dim); }
+        .meta-val { color: var(--green); word-break: break-all; }
+ 
+        .modal-actions {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 0.8rem;
+        }
+ 
+        .btn {
+            padding: 0.5rem 1rem;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            cursor: pointer;
+            letter-spacing: 0.1em;
+            transition: all 0.2s;
+            border: 1px solid;
+        }
+ 
+        .btn-danger {
+            background: transparent;
+            border-color: var(--red);
+            color: var(--red);
+        }
+ 
+        .btn-danger:hover {
+            background: rgba(255,45,45,0.1);
+            box-shadow: 0 0 12px rgba(255,45,45,0.2);
+        }
+ 
+        .btn-default {
+            background: transparent;
+            border-color: var(--border-bright);
+            color: var(--text-dim);
+        }
+ 
+        .btn-default:hover { border-color: var(--green-dim); color: var(--green-dim); }
+ 
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border-bright); }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="logo">
+        ARACHNIDA
+        <span>// CYBER RECON PLATFORM v1.0</span>
+      </div>
+      <div class="status-bar">
+        <div class="status-item"><div class="dot active" id="sys-dot"></div> SYS_ONLINE</div>
+        <div class="status-item"><div class="dot" id="crawl-dot"></div> <span id="crawl-status">IDLE</span></div>
+        <div class="status-item"><div class="dot active"></div> <span id="clock"></span></div>
+      </div>
+    </header>
+
+    <main>
+      <!-- LEFT CONTROL PANEL -->
+      <div class="control-panel">
+        <div class="panel-header">SPIDER CONTROL</div>
+        <div class="panel-body">
+          <div class="field-group">
+            <label>TARGET URL <span class="required">*</span></label>
+            <input type="text" id="url-input" placeholder="https://target.com" />
+          </div>
+
+          <div class="field-group">
+            <div class="toggle-row">
+              <div>
+                <div class="toggle-label">RECURSIVE CRAWL</div>
+                <div class="toggle-dec">Follow all links from target</div>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" id="recursive-toggle">
+                <div class="toggle-track"><div class="toggle-thumb"></div></div>
+              </label>
+            </div>
+            <div class="depth-row" id="depth-row" style="opacity:0.3; pointer-events:none;">
+              <label>MAX DEPTH</label>
+              <input type="number" id="depth-input" value="5" min="1" max="10" />
+            </div>
+          </div>
+
+          <button class="crawl-btn" id="crawl-btn" onclick="startCrawl()">
+            INITIATE CRAWL
+          </button>
+          <button class="btn btn-danger" id="stop-btn" onclick="stopCrawl()"
+            style="width:100%; margin-top:0.5rem; display:none;">
+            ■ ABORT CRAWL
+          </button>
+
+          <!-- TERMINAL LOG -->
+          <div class="terminal">
+            <div class="terminal-header">
+              <div class="terminal-dor r"></div>
+              <div class="terminal-dot y"></div>
+              <div class="terminal-dot g"></div>
+              &nbsp; SYSTEM LOG
+            </div>
+            <div class="terminal-log" id="log">
+              <div class="log-line info">$ arachnida --ready</div>
+              <div class="log-line">awaiting target...<span class="cursor"></span></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      
+      <!-- RIGHT DASHBOARD -->
+      <div class="dashboard">
+        <div class="dashboard-header">
+          <div class="dashboard-title">IMAGE INTELLIGENCE DASHBOARD</div>
+          <div class="stats">
+            <div class="stat">CAPTURED <span id="count">0</span></div>
+            <div class="stat">DEPTH <span id="depth-display">-</span></div>
+            <div class="stat">STATUS <span id="status-display">IDLE</span></div>
+          </div>
+        </div>
+
+        <div class="image-grid" id="grid">
+          <div class="empty-state">
+            <pre class="spider-ascii">    /\  /\
+   /  \/  \
+  | ◉    ◉ |
+   \  /\  /
+  __\/  \/__
+ /   \  /   \
+/     \/     \</pre>
+            <div class="empty-text">NO TARGETS ACQUIRED</div>
+            <div class="empty-sub">enter a url and initiate crawl to begin</div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- METADATA MODAL -->
+    <div class="modal-overlay" id="modal">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title">// IMAGE METADATA</div>
+          <button class="modal-close" onclick="closeModal()">[ CLOSE ]</button>
+        </div>
+        <img class="modal-img" id="modal-img" src="" alt="">
+        <div class="modal-meta" id="modal-meta"></div>
+        <div class="modal-actions">
+          <button class="btn btn-danger" onclick="stripMeta()">⚠ STRIP ALL METADATA</button>
+          <button class="btn btn-default" onclick="closeModal()">CLOSE</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    // Clock
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('clock').textContent =
+            now.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+ 
+    // Recursive toggle enables/disables depth
+    document.getElementById('recursive-toggle').addEventListener('change', function() {
+        const depthRow = document.getElementById('depth-row');
+        depthRow.style.opacity = this.checked ? '1' : '0.3';
+        depthRow.style.pointerEvents = this.checked ? 'auto' : 'none';
+    });
+ 
+    let currentFile = null;
+    let imageCount = 0;
+    let eventSource = null;
+ 
+    function log(msg, type = '') {
+        const logEl = document.getElementById('log');
+        const line = document.createElement('div');
+        line.className = 'log-line ' + type;
+        line.textContent = msg;
+        logEl.appendChild(line);
+        logEl.scrollTop = logEl.scrollHeight;
+    }
+ 
+    function startCrawl() {
+        const url = document.getElementById('url-input').value.trim();
+        if (!url) { log('ERROR: no target specified', 'error'); return; }
+ 
+        const recursive = document.getElementById('recursive-toggle').checked;
+        const depth = document.getElementById('depth-input').value;
+ 
+        // Reset
+        imageCount = 0;
+        document.getElementById('count').textContent = '0';
+        document.getElementById('depth-display').textContent = recursive ? depth : '1';
+        document.getElementById('status-display').textContent = 'CRAWLING';
+        document.getElementById('grid').innerHTML = '';
+        document.getElementById('log').innerHTML = '';
+        document.getElementById('crawl-btn').disabled = true;
+        document.getElementById('crawl-dot').classList.add('active');
+        document.getElementById('stop-btn').style.display = 'block';
+ 
+        log(`$ spider --target ${url}`, 'info');
+        log(`  recursive: ${recursive} | depth: ${recursive ? depth : 1}`);
+        log('initiating crawl sequence...', 'info');
+ 
+        if (eventSource) eventSource.close();
+ 
+        const params = new URLSearchParams({ url, r: recursive, l: depth });
+        eventSource = new EventSource(`/crawl?${params}`);
+ 
+        eventSource.onmessage = (e) => {
+            if (e.data === 'DONE') {
+                eventSource.close();
+                document.getElementById('crawl-btn').disabled = false;
+                document.getElementById('crawl-dot').classList.remove('active');
+                document.getElementById('status-display').textContent = 'COMPLETE';
+                document.getElementById('stop-btn').style.display = 'none';
+                log(`crawl complete. ${imageCount} image(s) captured.`, 'success');
+                return;
+            }
+ 
+            const filename = e.data;
+            imageCount++;
+            document.getElementById('count').textContent = imageCount;
+            log(`[+] captured: ${filename}`, 'success');
+            addImageCard(filename);
+        };
+ 
+        eventSource.onerror = () => {
+            log('ERROR: connection lost', 'error');
+            document.getElementById('crawl-btn').disabled = false;
+            document.getElementById('crawl-dot').classList.remove('active');
+            document.getElementById('status-display').textContent = 'ERROR';
+            eventSource.close();
+        };
+    }
+    function stopCrawl() {
+      if (eventSource) {
+        eventSource.close();
+        fetch('/stop', { method: 'POST' });
+      }
+      document.getElementById('crawl-btn').disabled = false;
+      document.getElementById('stop-btn').style.display = 'none';
+      document.getElementById('crawl-dot').classList.remove('active');
+      document.getElementById('status-display').textContent = 'ABORTED';
+      log('[!] crawl aborted by user', 'info');
+    }
+ 
+    function addImageCard(filename) {
+        const grid = document.getElementById('grid');
+        const card = document.createElement('div');
+        card.className = 'img-card';
+        card.onclick = () => openModal(filename);
+ 
+        const scanLine = document.createElement('div');
+        scanLine.className = 'scan-overlay';
+ 
+        const img = document.createElement('img');
+        img.src = `/static/data/${filename}`;
+        img.alt = filename;
+        img.onerror = () => card.remove();
+ 
+        const footer = document.createElement('div');
+        footer.className = 'img-card-footer';
+        footer.textContent = filename;
+ 
+        card.appendChild(scanLine);
+        card.appendChild(img);
+        card.appendChild(footer);
+        grid.appendChild(card);
+    }
+ 
+    function openModal(filename) {
+        currentFile = filename;
+        document.getElementById('modal-img').src = `/static/data/${filename}`;
+        document.getElementById('modal-meta').innerHTML = '<div class="log-line info">loading metadata...</div>';
+        document.getElementById('modal').classList.add('open');
+ 
+        fetch(`/metadata?file=${encodeURIComponent(filename)}`)
+            .then(r => r.json())
+            .then(data => {
+                const el = document.getElementById('modal-meta');
+                if (!data || Object.keys(data).length === 0) {
+                    el.innerHTML = '<div class="log-line">no metadata found</div>';
+                    return;
+                }
+                el.innerHTML = Object.entries(data).map(([k, v]) =>
+                    `<div class="meta-row"><div class="meta-key">${k}</div><div class="meta-val">${v}</div></div>`
+                ).join('');
+            });
+    }
+ 
+    function closeModal() {
+        document.getElementById('modal').classList.remove('open');
+        currentFile = null;
+    }
+ 
+    function stripMeta() {
+        if (!currentFile) return;
+        fetch(`/strip?file=${encodeURIComponent(currentFile)}`, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                log(`[!] metadata stripped: ${currentFile}`, 'info');
+                document.getElementById('modal-meta').innerHTML =
+                    '<div class="log-line info">metadata successfully stripped</div>';
+            });
+    }
+ 
+    // Close modal on overlay click
+    document.getElementById('modal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+    </script>
+  </body>
+</html>
