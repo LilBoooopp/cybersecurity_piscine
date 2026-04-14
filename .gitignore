@@ -1,0 +1,19 @@
+# Python
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+
+# Virtual environments
+**/.env
+**/venv/
+
+# scraped images
+**/static/data
+
+# Flask
+**/instance/
+
+# System
+**/.DS_Store
+**/.idea/
+**/.vscode/
