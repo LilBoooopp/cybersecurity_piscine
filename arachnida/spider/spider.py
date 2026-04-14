@@ -3,6 +3,30 @@ import requests
 from bs4 import BeautifulSoup
 import argparse
 import hashlib
+from urllib.parse import urlparse
+import ipaddress
+import socket
+
+def is_safe_url(url):
+    try:
+        parsed = urlparse(url)
+
+        # block non-http
+        if parsed.scheme not in ("http", "https"):
+            return False
+
+        # block localhost
+        if parsed.hostname in ("localhost", "127.0.0.1", "::1"):
+            return False
+
+        # resolve hostname to ip and check if private
+        ip = ipaddress.ip_address(socket.gethostbyname(parsed.hostname))
+        if ip.is_private:
+            return False
+        
+        return True
+    except Exception:
+        return False
 
 def spider(url, recursive, max_depth, save_path):
     queue = [(url, 0)]
@@ -12,7 +36,7 @@ def spider(url, recursive, max_depth, save_path):
     while queue:
         item = queue.pop(0)
         current_url = item[0]
-        if current_url in visited:
+        if current_url in visited or not is_safe_url(current_url):
             continue
         visited.add(current_url)
         depth = item[1]
