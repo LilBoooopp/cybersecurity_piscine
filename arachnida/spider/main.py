@@ -2,6 +2,7 @@ import os
 import requests
 from bs4 import BeautifulSoup
 import argparse
+import hashlib
 
 def spider(url, recursive, max_depth, save_path):
     queue = [(url, 0)]
@@ -16,25 +17,36 @@ def spider(url, recursive, max_depth, save_path):
         depth = item[1]
         if depth > max_depth:
             continue
-        response = requests.get(current_url)
-        if (response.status_code != 200):
-            continue
-        soup = BeautifulSoup(response.text, "html.parser")
-        images = soup.find_all("img")
-        for img in images:
-            src = img.get("src")
-            if (not src or not src.startswith("http")) or (not src.lower().endswith((".jpg", ".jpeg", ".png", ".gif", ".bmp"))):
+        try:
+            response = requests.get(current_url, timeout=5)
+            if (response.status_code != 200):
                 continue
-            response_img = requests.get(src)
-            with open(save_path + os.path.basename(src), "wb") as f:
-                f.write(response_img.content)
-        if (recursive):
-            links = soup.find_all("a")
-            for link in links:
-                href = link.get("href")
-                if (not href or not href.startswith("http")):
+            soup = BeautifulSoup(response.text, "html.parser")
+            images = soup.find_all("img")
+            for img in images:
+                src = img.get("src")
+                if (not src or not src.startswith("http")) or (not src.lower().endswith((".jpg", ".jpeg", ".png", ".gif", ".bmp"))):
                     continue
-                queue.append((href, depth + 1))
+                try:
+                    response_img = requests.get(src, timeout=5)
+                    url_hash = hashlib.md5(src.encode()).hexdigest()[:8]
+                    ext = os.path.splitext(os.path.basename(src))[1]
+                    filename = f"{url_hash}{ext}"
+                    with open(save_path + filename, "wb") as f:
+                        f.write(response_img.content)
+                    print(f"Downloaded: {filename}")
+                except Exception as e:
+                    print(f"Failed to download image {src}: {e}")
+            if (recursive):
+                links = soup.find_all("a")
+                for link in links:
+                    href = link.get("href")
+                    if (not href or not href.startswith("http")):
+                        continue
+                    queue.append((href, depth + 1))
+        except Exception as e:
+            print(f"Failed to fetch {current_url}: {e}")
+            continue
 
 parser = argparse.ArgumentParser(description="Spider = image scraper")
 parser.add_argument("-r", action="store_true", help="recursive download")
