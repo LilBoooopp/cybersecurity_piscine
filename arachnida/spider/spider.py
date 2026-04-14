@@ -7,6 +7,7 @@ import hashlib
 def spider(url, recursive, max_depth, save_path):
     queue = [(url, 0)]
     visited = set()
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
 
     while queue:
         item = queue.pop(0)
@@ -18,7 +19,7 @@ def spider(url, recursive, max_depth, save_path):
         if depth > max_depth:
             continue
         try:
-            response = requests.get(current_url, timeout=5)
+            response = requests.get(current_url, headers=headers, timeout=5)
             if (response.status_code != 200):
                 continue
             soup = BeautifulSoup(response.text, "html.parser")
@@ -28,7 +29,7 @@ def spider(url, recursive, max_depth, save_path):
                 if (not src or not src.startswith("http")) or (not src.lower().endswith((".jpg", ".jpeg", ".png", ".gif", ".bmp"))):
                     continue
                 try:
-                    response_img = requests.get(src, timeout=5)
+                    response_img = requests.get(src, headers=headers, timeout=5)
                     url_hash = hashlib.md5(src.encode()).hexdigest()[:8]
                     ext = os.path.splitext(os.path.basename(src))[1]
                     filename = f"{url_hash}{ext}"
