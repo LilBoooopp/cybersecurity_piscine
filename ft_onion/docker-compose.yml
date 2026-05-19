@@ -1,0 +1,18 @@
+services:
+  onion:
+    container_name: onion_web
+    build:
+      context: ./onion/
+      dockerfile: Dockerfile
+    image: onion_web
+    pull_policy: never
+    volumes:
+      - onion:/var/lib/tor/hidden_service/
+    restart: always
+    ports:
+      - "8080:80"
+      - "4242:4242"
+
+volumes:
+  onion:
+
