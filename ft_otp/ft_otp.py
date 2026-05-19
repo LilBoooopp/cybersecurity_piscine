@@ -57,7 +57,7 @@ def gen_key(path):
 
 def main(args):
     if len(args) != 3:
-        print("Usage: ft_otp -g <keyfile> | ft_otp -k <keyfile>")
+        print("Usage: ft_otp -g <keyfile> || ft_otp -k <keyfile>")
         sys.exit(1)
     elif (args[1] == "-g"):
         store_key(args[2])
