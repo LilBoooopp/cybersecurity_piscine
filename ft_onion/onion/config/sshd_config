@@ -1,0 +1,9 @@
+Port 4242
+PermitRootLogin prohibit-password
+PasswordAuthentication no
+PubkeyAuthentication yes
+MaxAuthTries 3
+MaxSessions 3
+AllowAgentForwarding no
+AllowTcpForwarding no
+X11Forwarding no

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ft_onion</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --border: rgba(255,255,255,0.07);
+      --accent: #7f77dd;
+      --accent-dim: rgba(127,119,221,0.12);
+      --text: #e8e6f0;
+      --muted: #6b6880;
+      --green: #1d9e75;
+      --green-dim: rgba(29,158,117,0.12);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 640px;
+      width: 100%;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--green-dim);
+      border: 1px solid rgba(29,158,117,0.3);
+      color: #5dcaa5;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 2rem;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #5dcaa5;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    h1 {
+      font-size: clamp(2rem, 6vw, 3.5rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-bottom: 1rem;
+    }
+
+    h1 span {
+      color: var(--accent);
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+      margin-bottom: 2.5rem;
+      max-width: 480px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 2.5rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+    }
+
+    .card-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .card-value {
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .card-value.accent { color: var(--accent); }
+    .card-value.green { color: #5dcaa5; }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 2rem 0;
+    }
+
+    .footer {
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .onion-art {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.4;
+      margin-bottom: 2rem;
+      opacity: 0.4;
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div class="onion-art" aria-hidden="true">
+      &nbsp;&nbsp;&nbsp;&nbsp;.---.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+      &nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+      &nbsp;|&nbsp;&nbsp;.---.&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;<br>
+      &nbsp;|&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\&nbsp;|&nbsp;&nbsp;&nbsp;<br>
+      &nbsp;||&nbsp;&nbsp;tor&nbsp;&nbsp;||&nbsp;&nbsp;&nbsp;<br>
+      &nbsp;|&nbsp;\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;|&nbsp;&nbsp;&nbsp;<br>
+      &nbsp;&nbsp;\&nbsp;'---'&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;<br>
+      &nbsp;&nbsp;&nbsp;'-----'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+    </div>
+
+    <div class="badge">
+      <div class="dot"></div>
+      hidden service active
+    </div>
+
+    <h1>you found<br /><span>ft_onion</span></h1>
+
+    <p class="subtitle">
+      this page is hosted as a tor hidden service.<br />
+      no ip address. no location. no identity.<br />
+      the onion routing protocol protects both ends.
+    </p>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-label">protocol</div>
+        <div class="card-value accent">tor v3 onion</div>
+      </div>
+      <div class="card">
+        <div class="card-label">status</div>
+        <div class="card-value green">● online</div>
+      </div>
+      <div class="card">
+        <div class="card-label">web server</div>
+        <div class="card-value">nginx</div>
+      </div>
+      <div class="card">
+        <div class="card-label">ssh port</div>
+        <div class="card-value">4242</div>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <div class="footer">
+      <span>42 cybersecurity piscine — ft_onion</span>
+      <span>&#127837; built with docker</span>
+    </div>
+
+  </div>
+</body>
+</html>
