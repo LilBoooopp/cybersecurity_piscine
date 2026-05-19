@@ -3,195 +3,312 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ft_onion</title>
+  <title>ft_onion — what we see</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg: #0a0a0f;
-      --surface: #111118;
-      --border: rgba(255,255,255,0.07);
-      --accent: #7f77dd;
-      --accent-dim: rgba(127,119,221,0.12);
-      --text: #e8e6f0;
-      --muted: #6b6880;
-      --green: #1d9e75;
-      --green-dim: rgba(29,158,117,0.12);
+      --bg: #080810;
+      --surface: #0f0f1a;
+      --border: rgba(255,255,255,0.06);
+      --border2: rgba(255,255,255,0.1);
+      --purple: #7f77dd;
+      --teal-light: #5dcaa5;
+      --teal-dim: rgba(29,158,117,0.1);
+      --red: #e24b4a;
+      --red-dim: rgba(226,75,74,0.1);
+      --amber: #ef9f27;
+      --amber-dim: rgba(239,159,39,0.1);
+      --text: #ddd8f0;
+      --muted: #5a5770;
+      --muted2: #7a7590;
     }
-
     body {
       background: var(--bg);
       color: var(--text);
       font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 13px;
+      line-height: 1.6;
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem;
+      padding: 2rem 1.5rem 4rem;
     }
-
-    .container {
-      max-width: 640px;
-      width: 100%;
+    .wrap { max-width: 720px; margin: 0 auto; }
+    .header { margin-bottom: 2.5rem; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--teal-light);
+      background: var(--teal-dim);
+      border: 1px solid rgba(93,202,165,0.2);
+      padding: 3px 10px; border-radius: 20px;
+      margin-bottom: 1.25rem;
     }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: var(--green-dim);
-      border: 1px solid rgba(29,158,117,0.3);
-      color: #5dcaa5;
-      font-size: 11px;
-      padding: 4px 10px;
-      border-radius: 20px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+    .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--teal-light); animation: blink 2s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+    h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; color: #fff; margin-bottom: 0.5rem; }
+    h1 span { color: var(--purple); }
+    .lead { font-size: 12px; color: var(--muted2); max-width: 520px; line-height: 1.8; }
+    .score-bar {
+      background: var(--surface); border: 1px solid var(--border2);
+      border-radius: 12px; padding: 1.25rem 1.5rem;
       margin-bottom: 2rem;
+      display: flex; align-items: center; gap: 1.5rem;
     }
-
-    .dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #5dcaa5;
-      animation: pulse 2s ease-in-out infinite;
+    .score-ring { width: 64px; height: 64px; flex-shrink: 0; position: relative; }
+    .score-ring svg { width: 64px; height: 64px; transform: rotate(-90deg); }
+    .score-ring .track { fill: none; stroke: var(--border2); stroke-width: 5; }
+    .score-ring .fill { fill: none; stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
+    .score-num {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 700; color: #fff;
     }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
+    .score-info { flex: 1; }
+    .score-label { font-size: 11px; color: var(--muted2); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+    .score-verdict { font-size: 15px; font-weight: 600; }
+    .section-title {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em;
+      color: var(--muted); margin-bottom: 10px; margin-top: 1.75rem;
+      padding-bottom: 6px; border-bottom: 0.5px solid var(--border);
     }
-
-    h1 {
-      font-size: clamp(2rem, 6vw, 3.5rem);
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      line-height: 1.1;
-      margin-bottom: 1rem;
-    }
-
-    h1 span {
-      color: var(--accent);
-    }
-
-    .subtitle {
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.7;
-      margin-bottom: 2.5rem;
-      max-width: 480px;
-    }
-
-    .cards {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 2.5rem;
-    }
-
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
     .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 1rem 1.25rem;
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-radius: 8px; padding: 10px 14px;
+      animation: fadeIn 0.4s ease both;
     }
-
-    .card-label {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--muted);
-      margin-bottom: 6px;
+    @keyframes fadeIn { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform: none; } }
+    .card-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+    .card-value { font-size: 12px; color: var(--text); word-break: break-all; }
+    .card-value.good { color: var(--teal-light); }
+    .card-value.warn { color: var(--amber); }
+    .card-value.bad  { color: var(--red); }
+    .fp-block {
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-radius: 8px; padding: 12px 14px; margin-top: 8px;
     }
-
-    .card-value {
-      font-size: 13px;
-      color: var(--text);
+    .fp-hash { font-size: 11px; color: var(--purple); word-break: break-all; letter-spacing: 0.04em; }
+    .fp-note { font-size: 11px; color: var(--muted2); margin-top: 6px; }
+    .leak-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+    .leak-row {
+      display: flex; align-items: flex-start; gap: 10px;
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-radius: 8px; padding: 10px 14px;
     }
-
-    .card-value.accent { color: var(--accent); }
-    .card-value.green { color: #5dcaa5; }
-
-    .divider {
-      border: none;
-      border-top: 1px solid var(--border);
-      margin: 2rem 0;
+    .leak-icon { font-size: 14px; margin-top: 1px; flex-shrink: 0; }
+    .leak-title { font-size: 12px; font-weight: 600; color: var(--text); }
+    .leak-desc { font-size: 11px; color: var(--muted2); margin-top: 2px; }
+    .tag {
+      display: inline-block; font-size: 10px; padding: 2px 7px;
+      border-radius: 4px; margin-left: 6px; vertical-align: middle;
     }
-
-    .footer {
-      font-size: 11px;
-      color: var(--muted);
-      display: flex;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .onion-art {
-      font-size: 11px;
-      color: var(--muted);
-      line-height: 1.4;
-      margin-bottom: 2rem;
-      opacity: 0.4;
-      user-select: none;
+    .tag-tor  { background: var(--teal-dim);  color: var(--teal-light); border: 0.5px solid rgba(93,202,165,0.2); }
+    .tag-risk { background: var(--red-dim);   color: #f09595;           border: 0.5px solid rgba(226,75,74,0.2); }
+    .tag-warn { background: var(--amber-dim); color: var(--amber);      border: 0.5px solid rgba(239,159,39,0.2); }
+    .footer-note {
+      margin-top: 3rem; padding-top: 1.5rem;
+      border-top: 0.5px solid var(--border);
+      font-size: 11px; color: var(--muted);
+      display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-
-    <div class="onion-art" aria-hidden="true">
-      &nbsp;&nbsp;&nbsp;&nbsp;.---.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
-      &nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
-      &nbsp;|&nbsp;&nbsp;.---.&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;<br>
-      &nbsp;|&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\&nbsp;|&nbsp;&nbsp;&nbsp;<br>
-      &nbsp;||&nbsp;&nbsp;tor&nbsp;&nbsp;||&nbsp;&nbsp;&nbsp;<br>
-      &nbsp;|&nbsp;\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;|&nbsp;&nbsp;&nbsp;<br>
-      &nbsp;&nbsp;\&nbsp;'---'&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;<br>
-      &nbsp;&nbsp;&nbsp;'-----'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
-    </div>
-
-    <div class="badge">
-      <div class="dot"></div>
-      hidden service active
-    </div>
-
-    <h1>you found<br /><span>ft_onion</span></h1>
-
-    <p class="subtitle">
-      this page is hosted as a tor hidden service.<br />
-      no ip address. no location. no identity.<br />
-      the onion routing protocol protects both ends.
-    </p>
-
-    <div class="cards">
-      <div class="card">
-        <div class="card-label">protocol</div>
-        <div class="card-value accent">tor v3 onion</div>
-      </div>
-      <div class="card">
-        <div class="card-label">status</div>
-        <div class="card-value green">● online</div>
-      </div>
-      <div class="card">
-        <div class="card-label">web server</div>
-        <div class="card-value">nginx</div>
-      </div>
-      <div class="card">
-        <div class="card-label">ssh port</div>
-        <div class="card-value">4242</div>
-      </div>
-    </div>
-
-    <hr class="divider" />
-
-    <div class="footer">
-      <span>42 cybersecurity piscine — ft_onion</span>
-      <span>&#127837; built with docker</span>
-    </div>
-
+<div class="wrap">
+  <div class="header">
+    <div class="eyebrow"><div class="dot"></div> tor hidden service</div>
+    <h1>what we <span>see</span></h1>
+    <p class="lead">your ip address is hidden — but your browser is not. this page reveals what any website learns about you the moment you connect.</p>
   </div>
+
+  <div class="score-bar">
+    <div class="score-ring">
+      <svg viewBox="0 0 64 64">
+        <circle class="track" cx="32" cy="32" r="27"/>
+        <circle class="fill" id="ring-fill" cx="32" cy="32" r="27" stroke-dasharray="169.6" stroke-dashoffset="169.6"/>
+      </svg>
+      <div class="score-num" id="score-num">0</div>
+    </div>
+    <div class="score-info">
+      <div class="score-label">privacy score</div>
+      <div class="score-verdict" id="score-verdict">scanning...</div>
+    </div>
+  </div>
+
+  <div class="section-title">network</div>
+  <div class="grid" id="net-grid"></div>
+
+  <div class="section-title">browser identity</div>
+  <div class="grid" id="browser-grid"></div>
+
+  <div class="section-title">system &amp; hardware signals</div>
+  <div class="grid" id="hw-grid"></div>
+
+  <div class="section-title">canvas fingerprint</div>
+  <div class="fp-block">
+    <div class="fp-hash" id="fp-hash">computing...</div>
+    <div class="fp-note" id="fp-note"></div>
+  </div>
+
+  <div class="section-title">what tor protects — and what it doesn't</div>
+  <div class="leak-list">
+    <div class="leak-row">
+      <div class="leak-icon" style="color:var(--teal-light)">&#10003;</div>
+      <div>
+        <div class="leak-title">ip address <span class="tag tag-tor">hidden by tor</span></div>
+        <div class="leak-desc">the server sees the exit node's ip, not yours. this is tor's core guarantee.</div>
+      </div>
+    </div>
+    <div class="leak-row">
+      <div class="leak-icon" style="color:var(--teal-light)">&#10003;</div>
+      <div>
+        <div class="leak-title">server location <span class="tag tag-tor">hidden by tor</span></div>
+        <div class="leak-desc">this server has no public ip. it exists only inside the tor network.</div>
+      </div>
+    </div>
+    <div class="leak-row">
+      <div class="leak-icon" style="color:var(--amber)">&#9888;</div>
+      <div>
+        <div class="leak-title">browser fingerprint <span class="tag tag-warn">partially exposed</span></div>
+        <div class="leak-desc">tor browser normalises screen size, fonts and user-agent. other browsers do not.</div>
+      </div>
+    </div>
+    <div class="leak-row">
+      <div class="leak-icon" style="color:var(--red)">&#10007;</div>
+      <div>
+        <div class="leak-title">javascript data <span class="tag tag-risk">exposed</span></div>
+        <div class="leak-desc">timezone, language, hardware concurrency, screen dimensions — all visible to any page.</div>
+      </div>
+    </div>
+    <div class="leak-row">
+      <div class="leak-icon" style="color:var(--red)">&#10007;</div>
+      <div>
+        <div class="leak-title">canvas &amp; webgl fingerprint <span class="tag tag-risk">exposed unless blocked</span></div>
+        <div class="leak-desc">rendering differences between gpus produce a near-unique fingerprint. tor browser blocks this.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    <span>ft_onion — 42 cybersecurity piscine</span>
+    <span>no data is collected or transmitted</span>
+  </div>
+</div>
+<script>
+(function(){
+  function card(label, value, cls){
+    var c = document.createElement('div');
+    c.className = 'card';
+    c.innerHTML = '<div class="card-label">'+label+'</div><div class="card-value'+(cls?' '+cls:'')+'">'+value+'</div>';
+    return c;
+  }
+  function append(id, items){
+    var g = document.getElementById(id);
+    items.forEach(function(i){ g.appendChild(card(i[0],i[1],i[2])); });
+  }
+
+  var ua = navigator.userAgent;
+  var isTor = /Firefox/.test(ua) && screen.width === 1000;
+
+  append('net-grid',[
+    ['your ip', 'hidden by tor', 'good'],
+    ['protocol', location.protocol.replace(':','')],
+    ['hostname', location.hostname],
+    ['referrer', document.referrer || 'none', document.referrer ? 'warn' : 'good']
+  ]);
+
+  var browser = 'unknown';
+  if(/Firefox/.test(ua)) browser = 'Firefox';
+  else if(/Chrome/.test(ua)) browser = 'Chrome';
+  else if(/Safari/.test(ua)) browser = 'Safari';
+
+  append('browser-grid',[
+    ['user agent', ua.substring(0,48)+(ua.length>48?'...':''), isTor ? 'good' : 'warn'],
+    ['browser', browser, (isTor && browser==='Firefox') ? 'good' : 'warn'],
+    ['language', navigator.language || 'unknown', 'warn'],
+    ['languages', (navigator.languages || [navigator.language]).join(', ')],
+    ['cookies enabled', navigator.cookieEnabled ? 'yes' : 'no'],
+    ['do not track', navigator.doNotTrack || 'unset']
+  ]);
+
+  var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  append('hw-grid',[
+    ['screen', screen.width + 'x' + screen.height, (isTor && screen.width===1000) ? 'good' : 'warn'],
+    ['color depth', screen.colorDepth + ' bit'],
+    ['pixel ratio', window.devicePixelRatio],
+    ['timezone', tz, isTor ? 'good' : 'bad'],
+    ['cpu threads', navigator.hardwareConcurrency || 'unknown', isTor ? 'good' : 'warn'],
+    ['memory (gb)', navigator.deviceMemory || 'hidden', (!navigator.deviceMemory) ? 'good' : 'warn'],
+    ['platform', navigator.platform || 'unknown', isTor ? 'good' : 'warn'],
+    ['touch points', navigator.maxTouchPoints]
+  ]);
+
+  function hashCanvas(){
+    try {
+      var c = document.createElement('canvas');
+      c.width = 200; c.height = 40;
+      var ctx = c.getContext('2d');
+      ctx.fillStyle = '#7f77dd';
+      ctx.fillRect(0, 0, 200, 40);
+      ctx.fillStyle = '#5dcaa5';
+      ctx.font = '14px monospace';
+      ctx.fillText('ft_onion fingerprint', 10, 25);
+      ctx.strokeStyle = '#ef9f27';
+      ctx.beginPath(); ctx.arc(180, 20, 12, 0, Math.PI*2); ctx.stroke();
+      var data = c.toDataURL();
+      var hash = 0;
+      for(var i = 0; i < data.length; i++){
+        hash = ((hash << 5) - hash) + data.charCodeAt(i);
+        hash |= 0;
+      }
+      return '0x' + (hash >>> 0).toString(16).padStart(8,'0').toUpperCase();
+    } catch(e) { return 'blocked'; }
+  }
+
+  var fp = hashCanvas();
+  var fpEl = document.getElementById('fp-hash');
+  var fpNote = document.getElementById('fp-note');
+  var isBlocked = fp === 'blocked' || fp === '0x00000000';
+  fpEl.textContent = fp;
+  if(isBlocked){
+    fpEl.style.color = 'var(--teal-light)';
+    fpNote.textContent = 'canvas fingerprinting is blocked — good. tor browser does this by default.';
+  } else {
+    fpNote.textContent = 'this value is likely unique to your browser+gpu combination. it persists across sessions.';
+  }
+
+  var score = 0;
+  if(isTor) score += 35;
+  if(isBlocked) score += 25;
+  if(!navigator.deviceMemory) score += 10;
+  if(!document.referrer) score += 10;
+  if(navigator.doNotTrack === '1') score += 5;
+  score = Math.min(score, 100);
+
+  var ring = document.getElementById('ring-fill');
+  var numEl = document.getElementById('score-num');
+  var verdictEl = document.getElementById('score-verdict');
+  var circ = 169.6;
+  var color = score >= 70 ? '#5dcaa5' : score >= 40 ? '#ef9f27' : '#e24b4a';
+  ring.style.stroke = color;
+  numEl.style.color = color;
+  verdictEl.style.color = color;
+
+  var cur = 0;
+  var timer = setInterval(function(){
+    cur = Math.min(cur + 2, score);
+    numEl.textContent = cur;
+    ring.style.strokeDashoffset = (circ - (circ * cur / 100)).toFixed(1);
+    if(cur >= score) clearInterval(timer);
+  }, 20);
+
+  if(score >= 70) verdictEl.textContent = 'well protected';
+  else if(score >= 40) verdictEl.textContent = 'some exposure';
+  else verdictEl.textContent = 'highly exposed';
+
+  document.querySelectorAll('.card').forEach(function(c, i){
+    c.style.animationDelay = (i * 30) + 'ms';
+  });
+})();
+</script>
 </body>
 </html>
