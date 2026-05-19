@@ -17,4 +17,7 @@
 **/.DS_Store
 **/.idea/
 **/.vscode/
+
 /ft_otp/ft_otp.key
+
+**/ssh_key*
