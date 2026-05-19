@@ -10,7 +10,6 @@ services:
       - onion:/var/lib/tor/hidden_service/
     restart: always
     ports:
-      - "8080:80"
       - "4242:4242"
 
 volumes:
