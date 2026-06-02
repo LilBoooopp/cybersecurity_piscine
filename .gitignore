@@ -21,3 +21,9 @@
 /ft_otp/ft_otp.key
 
 **/ssh_key*
+/reverseme/.gdb_history
+/reverseme/Level1/.gdb_history
+/reverseme/Level1/a.out
+/reverseme/Level2/.gdb_history
+/reverseme/Level2/a.out
+/reverseme/Level3/.gdb_history
