@@ -19,7 +19,7 @@ for file in args.files:
 
         if (not file.lower().endswith((".gif", ".bmp"))):
             image = Image.open(file)
-            exif_data = image._getexif() # returns a dict of {tag_id: value}
+            exif_data = image.getexif() # returns a dict of {tag_id: value}
 
             if (exif_data):
                 if (args.s):
