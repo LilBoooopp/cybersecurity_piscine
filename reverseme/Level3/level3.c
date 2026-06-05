@@ -36,23 +36,23 @@ void easy(){
 }
 
 void ___syscall_malloc() {
-    printf("Nope.");
+    printf("Nope.\n");
 }
 
 void ____syscall_malloc() {
-    printf("Good job.");
+    printf("Good job.\n");
 }
 
 int main(void)
 {
-    const char *password = "42********";
+    const char *password = "********";
     char str[9];
     char tmp[24];
     int idx;
     int pos;
     printf("Please enter key: ");
     if (scanf("%23s", tmp) != 1 || tmp[1] != '2' || tmp[0] != '4') {
-        printf("Nope.");
+        ___syscall_malloc();
         return (0);
     }
     fflush(stdin);
@@ -60,17 +60,17 @@ int main(void)
     str[0] = '*';
     idx = 2;
     pos = 1;
-    while (pos < 8 && idx + 3 <= (int)strlen(tmp))
+    while (strlen(str) < 8 && idx + 3 <= (int)strlen(tmp))
     {
         str[pos++] = atoi((char[4]){ tmp[idx], tmp[idx+1], tmp[idx+2], '\0'});
         idx += 3;
     }
-    switch (strcmp(password, str)) {
-        case (-2):
-        case (-1):
+    switch (strcmp(str, password)) {
         case (0):
             ____syscall_malloc();
             break;
+        case (-2):
+        case (-1):
         case (1):
         case (2):
         case (3):
