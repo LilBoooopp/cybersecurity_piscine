@@ -27,3 +27,7 @@
 /reverseme/Level2/.gdb_history
 /reverseme/Level2/a.out
 /reverseme/Level3/.gdb_history
+
+stockholm/__pycache__/
+stockholm/*.pyc
+stockholm/venv/

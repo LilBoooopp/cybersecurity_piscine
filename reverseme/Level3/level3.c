@@ -1,6 +1,47 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+void wt(){
+  printf("********");
+}
+void nice(){
+  printf("nice");
+}
+void try(){
+  printf("try");
+}
+
+void but(){
+  printf("but");
+}
+
+void this(){
+  printf("this");
+}
+
+void it(){
+  printf("it");
+}
+
+void not(){
+  printf("not");
+}
+
+void that(){
+  printf("that");
+}
+
+void easy(){
+  printf("easy");
+}
+
+void ___syscall_malloc() {
+    printf("Nope.");
+}
+
+void ____syscall_malloc() {
+    printf("Good job.");
+}
 
 int main(void)
 {
@@ -26,34 +67,18 @@ int main(void)
     }
     switch (strcmp(password, str)) {
         case (-2):
-            printf("Nope.");
-            break;
         case (-1):
-            printf("Nope.");
-            break;
         case (0):
-            printf("Good job.");
+            ____syscall_malloc();
             break;
         case (1):
-            printf("Nope.");
-            break;
         case (2):
-            printf("Nope.");
-            break;
         case (3):
-            printf("Nope.");
-            break;
         case (4):
-            printf("Nope.");
-            break;
         case (5):
-            printf("Nope.");
-            break;
         case (115):
-            printf("Nope.");
-            break;
         default:
-            printf("Nope.");
+            ___syscall_malloc();
     }
     return (0);
     
