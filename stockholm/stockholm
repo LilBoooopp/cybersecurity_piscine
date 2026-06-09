@@ -1,2 +1,0 @@
-#!/bin/sh
-exec "/home/cbopp/Documents/42/cybersecurity_piscine/stockholm/venv/bin/python" "/home/cbopp/Documents/42/cybersecurity_piscine/stockholm/stockholm.py" "$@"

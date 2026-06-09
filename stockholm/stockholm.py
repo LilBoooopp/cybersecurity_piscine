@@ -140,9 +140,18 @@ def decrypt_file(path: Path, password: str, silent: bool) -> None:
         print(f"stockholm: error: bad key or corrupt file: {path.name}", file=sys.stderr)
         return
 
+    original = path.with_suffix("")
+
+    try:
+        original.write_bytes(plaintext)
+    except OSError as e:
+        print(f"stockholm: warning: could not write {original.name}: {e}", file=sys.stderr)
+        return
+
     try:
         path.unlink()
     except OSError as e:
+        original.unlink(missing_ok=True)
         print(f"stockholm: warning: could not remove {path.name}: {e}", file=sys.stderr)
         return
 
@@ -158,7 +167,7 @@ def key_arg(value):
         )
     return value
 
-def parse_args():
+def parse_args(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="stockholm",
         description="A toy ransomware that encrypts files in ~/infection. "
@@ -186,7 +195,7 @@ def parse_args():
         action="store_true",
         help="suppress per-file output",
     )
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 def main():
     args = parse_args()
