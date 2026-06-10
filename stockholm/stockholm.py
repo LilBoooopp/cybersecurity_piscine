@@ -156,7 +156,7 @@ def decrypt_file(path: Path, password: str, silent: bool) -> None:
         return
 
     if not silent:
-        print(f"    decrypted: {path.name} -> original.name")
+        print(f"    decrypted: {path.name} -> {original.name}")
 
 # argparse
 
